@@ -36,7 +36,23 @@ void Storage::print_VTK_File(void) {
 		int digits = ceil(log10(iteration + 1));
 		std::string format = ".vtk";
 		std::string Number;
-		std::string initial = "Animation_realistic/YB_cellwall4_l0d3b0d015_strain0d01_noes_rigidring_dt0d0005_";
+		//std::string initial = "Animation_new/New_MC_interval_";
+		//std::string initial = "Animation_realistic_anneal/attempt1_kT3d0anneal_ks7d2_kb15_adh15_dt0d0002_";
+		//std::string initial = "Animation_QN/ss0d025_kT_0d5_QN_";
+		//std::string initial = "Animation_realistic_kT1d0/atp1_kT1d0_ks7d2_kb15_adh3d75_dt0d0002_";
+		//std::string initial = "Animation_5nm/atp1_kT2d5_ks28d8_kb15_ka720_adh15_dt0d0002_";
+		//std::string initial = "Animation_realistic_finaltry/wrap_v0d0001_dt0d0001_newrange_";
+		//std::string initial = "Animation_realistic/membrane_";//volumetest40_n2d0lowhem10_ka0_eqvol1d5_";//spheretest_rad0d17549_lowerhem5_ka5_ks25kb5_LJR2_"; //Anneal_adh15_Rv0d75_MD20a7d5_v0d2_NKBT4000_dt0d0002_";
+		//std::string initial = "Animation_realistic/yeastbudding_septinring_test_3particle_";
+		//std::string initial = "Animation_realistic/YB_cellwall3_l0d2b0d05a0d2_edgegrowth_areastrain0d2_maxt400_esfreq100_longsim200_";//yeastbudding_septin40_test_6particle_1pullonly_";
+		//std::string initial = "Animation_realistic10/YB_cellwall4_l1d0b0d1_st0d05_dampedring400_dt0d001_tau25_tipweakrange1d0_longsim_debug_tipesonly_";
+		std::string initial = "Animation_realistic10/YB_cellwall4_l1d0b0d05_st0d05_dampedring400_longsim_nontipbuddoublecoefRange1d0_SCALETYPE1_maxbendscale0d2_theta0d0_";
+		//std::string initial = "Animation_realistic9/YB_cellscission_";
+		//std::string initial = "Animation_realistic6/YB_cellwall3_l1d0b0d2a1d0_kT0d07_detgrowth_strain0d1_septin200_surfacegrowth_";
+		//std::string initial = "Animation_realistic/YB_reactive_isotropic_scalels0d01bs0d01as0d01_vols4d0_expthresh1d5rule1_";
+		//std::string initial = "Animation_realistic4/YB_cellwall3_isotropic_scalel0d5b0d25a0d5_vols0d3_expprob0d0025_dt0d001_1sttry_";
+		//std::string initial = "Animation_realistic/YB_recalib_l2a2b0d5_MPa0d0125125_";
+		//std::string initial = "Animation_realistic_flow/Pflow0d5_v0d0005_MRT0d005_dt0d0002_";
 		std::ofstream ofs;
 		if (digits == 1 || digits == 0) {
 			Number = "0000" + std::to_string(iteration);
@@ -89,7 +105,10 @@ void Storage::print_VTK_File(void) {
 		ofs << "CELLS " << numCells << " " << numNumsInCells << std::endl;
 		//place edges as cells of type 2. 
 		for (int edge = 0; edge < SYSTEM->coordInfoVecs.num_edges; edge++ ){
-			if (SYSTEM->coordInfoVecs.edges2Nodes_1[edge] != INT_MAX || SYSTEM->coordInfoVecs.edges2Nodes_2[edge] != INT_MAX){
+			if (SYSTEM->coordInfoVecs.edges2Nodes_1[edge] != INT_MAX &&
+			 SYSTEM->coordInfoVecs.edges2Nodes_2[edge] != INT_MAX &&
+			  SYSTEM->coordInfoVecs.edges2Nodes_1[edge] != -INT_MAX &&
+			   SYSTEM->coordInfoVecs.edges2Nodes_2[edge] != -INT_MAX){
 			int idA = SYSTEM->coordInfoVecs.edges2Nodes_1[edge];
 			int idB = SYSTEM->coordInfoVecs.edges2Nodes_2[edge];
 			
@@ -118,11 +137,12 @@ void Storage::print_VTK_File(void) {
 
 			int idA = SYSTEM->coordInfoVecs.edges2Nodes_1[edge];
 			int idB = SYSTEM->coordInfoVecs.edges2Nodes_2[edge];
+
 			//if (idA >= SYSTEM->generalParams.maxNodeCount && idA != INT_MAX)
 			//	std::cout<<idA<<std::endl;
 			//if (idB >= SYSTEM->generalParams.maxNodeCount && idB != INT_MAX)
 			//	std::cout<<idB<<std::endl;
-			if (idA == INT_MAX && idB == INT_MAX){
+			if (idA == INT_MAX || idB == INT_MAX || idA < 0 || idB < 0){
 				continue;
 			}
 			double L0 = SYSTEM->generalParams.Rmin;
@@ -144,6 +164,150 @@ void Storage::print_VTK_File(void) {
 		ofs.close();
 	
 	}
+
+	// if ((SYSTEM)) {
+
+	// 	iteration_daughter+=1;
+	// 	int digits = ceil(log10(iteration + 1));
+	// 	std::string format = ".vtk";
+	// 	std::string Number;
+	// 	//std::string initial = "Animation_new/New_MC_interval_";
+	// 	//std::string initial = "Animation_realistic_anneal/attempt1_kT3d0anneal_ks7d2_kb15_adh15_dt0d0002_";
+	// 	//std::string initial = "Animation_QN/ss0d025_kT_0d5_QN_";
+	// 	//std::string initial = "Animation_realistic_kT1d0/atp1_kT1d0_ks7d2_kb15_adh3d75_dt0d0002_";
+	// 	//std::string initial = "Animation_5nm/atp1_kT2d5_ks28d8_kb15_ka720_adh15_dt0d0002_";
+	// 	//std::string initial = "Animation_realistic_finaltry/wrap_v0d0001_dt0d0001_newrange_";
+	// 	//std::string initial = "Animation_realistic/membrane_";//volumetest40_n2d0lowhem10_ka0_eqvol1d5_";//spheretest_rad0d17549_lowerhem5_ka5_ks25kb5_LJR2_"; //Anneal_adh15_Rv0d75_MD20a7d5_v0d2_NKBT4000_dt0d0002_";
+	// 	//std::string initial = "Animation_realistic/yeastbudding_septinring_test_3particle_";
+	// 	//std::string initial = "Animation_realistic/YB_cellwall3_l0d2b0d05a0d2_edgegrowth_areastrain0d2_maxt400_esfreq100_longsim200_";//yeastbudding_septin40_test_6particle_1pullonly_";
+	// 	//std::string initial = "Animation_realistic9/YB_cellwall4_l1d0b0d1_st0d05_dampedring400_dt0d001_tau25_timecalib_damp1_ss0d05_formesh_";
+	// 	std::string initial = "Animation_realistic9/YB_cellscission_daughter_";
+	// 	//std::string initial = "Animation_realistic6/YB_cellwall3_l1d0b0d2a1d0_kT0d07_detgrowth_strain0d1_septin200_surfacegrowth_";
+	// 	//std::string initial = "Animation_realistic/YB_reactive_isotropic_scalels0d01bs0d01as0d01_vols4d0_expthresh1d5rule1_";
+	// 	//std::string initial = "Animation_realistic4/YB_cellwall3_isotropic_scalel0d5b0d25a0d5_vols0d3_expprob0d0025_dt0d001_1sttry_";
+	// 	//std::string initial = "Animation_realistic/YB_recalib_l2a2b0d5_MPa0d0125125_";
+	// 	//std::string initial = "Animation_realistic_flow/Pflow0d5_v0d0005_MRT0d005_dt0d0002_";
+	// 	std::ofstream ofs;
+	// 	if (digits == 1 || digits == 0) {
+	// 		Number = "0000" + std::to_string(iteration_daughter);
+	// 	}
+	// 	else if (digits == 2) {
+	// 		Number = "000" + std::to_string(iteration_daughter);
+	// 	}
+	// 	else if (digits == 3) {
+	// 		Number = "00" + std::to_string(iteration_daughter);
+	// 	}
+	// 	else if (digits == 4) {
+	// 		Number = "0" + std::to_string(iteration_daughter);
+	// 	}
+
+	// 	std::string Filename = initial + Number + format;
+
+	// 	ofs.open(Filename.c_str());
+		
+	
+	// 	int numParticles = SYSTEM->generalParams_daughter.maxNodeCount;//one for lj particle
+
+		
+		
+
+		
+	// 	ofs << "# vtk DataFile Version 3.0" << std::endl;
+	// 	ofs << "Point representing Sub_cellular elem model" << std::endl;
+	// 	ofs << "ASCII" << std::endl << std::endl;
+	// 	ofs << "DATASET UNSTRUCTURED_GRID" << std::endl;
+		
+		 
+	// 	ofs << "POINTS " <<numParticles + 1 << " float" << std::endl;
+	// 	for (int i = 0; i< numParticles; i++) {
+	// 		double xPos = SYSTEM->coordInfoVecs_daughter.nodeLocX[i];
+	// 		double yPos = SYSTEM->coordInfoVecs_daughter.nodeLocY[i];
+	// 		double zPos = SYSTEM->coordInfoVecs_daughter.nodeLocZ[i];
+			
+	// 		ofs << std::setprecision(5) <<std::fixed<< xPos << " " << yPos << " " << zPos << " " << '\n'<< std::fixed;
+	// 	}
+	// 	ofs << std::setprecision(5) <<std::fixed<< SYSTEM->ljInfoVecs.LJ_PosX << " " << SYSTEM->ljInfoVecs.LJ_PosY << " " << SYSTEM->ljInfoVecs.LJ_PosZ << " " << '\n'<< std::fixed;
+		
+		
+
+		
+	// 	int numEdges = SYSTEM->generalParams_daughter.true_num_edges;//coordInfoVecs.num_edges;//num_edges;
+	// 	int numCells = numEdges + 1;//one cell for LJ Particle, rest for edges of polymer
+	// 	int numNumsInCells = (3 * numEdges) + (2);//add one for lj and one to list it.
+		
+		
+	// 	ofs << "CELLS " << numCells << " " << numNumsInCells << std::endl;
+	// 	//place edges as cells of type 2. 
+	// 	int idA, idB;
+	// 	//for (int edge = 0; edge < SYSTEM->coordInfoVecs_daughter.edges2Nodes_1.size(); edge++ ){
+	// 	for (int edge = 0; edge < SYSTEM->coordInfoVecs_daughter.num_edges; edge++ ){
+	// 		if (SYSTEM->coordInfoVecs_daughter.edges2Nodes_1[edge] < (INT_MAX-100) &&
+	// 		 	SYSTEM->coordInfoVecs_daughter.edges2Nodes_2[edge] < (INT_MAX-100) &&
+	// 		  	SYSTEM->coordInfoVecs_daughter.edges2Nodes_1[edge] >= 0 &&
+	// 		   	SYSTEM->coordInfoVecs_daughter.edges2Nodes_2[edge] >= 0){
+	// 			idA = SYSTEM->coordInfoVecs_daughter.edges2Nodes_1[edge];
+	// 			idB = SYSTEM->coordInfoVecs_daughter.edges2Nodes_2[edge];}
+	// 		else if (SYSTEM->coordInfoVecs_daughter.edges2Nodes_1[edge] < (INT_MAX-100) &&
+	// 		  	SYSTEM->coordInfoVecs_daughter.edges2Nodes_1[edge] >= 0){
+	// 			idA = SYSTEM->coordInfoVecs_daughter.edges2Nodes_1[edge];
+	// 			idB = SYSTEM->coordInfoVecs_daughter.edges2Nodes_2[edge];}
+	// 		else if (SYSTEM->coordInfoVecs_daughter.edges2Nodes_2[edge] < (INT_MAX-100) &&
+	// 		   	SYSTEM->coordInfoVecs_daughter.edges2Nodes_2[edge] >= 0){
+	// 			idA = SYSTEM->coordInfoVecs_daughter.edges2Nodes_1[edge];
+	// 			idB = SYSTEM->coordInfoVecs_daughter.edges2Nodes_2[edge];}
+	// 		else{continue;}
+
+	// 		ofs<< 2 << " " << idA << " " << idB << std::endl;
+	// 		//}
+	// 	}
+
+	// 	ofs<< 1 << " " << SYSTEM->generalParams_daughter.maxNodeCount << std::endl;
+		
+	// 	ofs << "CELL_TYPES " << numCells << std::endl;  
+	// 	//set edges and last set scattered points(dpd)
+	// 	for (int i = 0; i < (numEdges); i++) {
+				
+	// 		ofs << 3 << std::endl;//edge (2d line)
+	// 	}
+	// 	ofs << 1 << std::endl;//edge (2d line)
+		
+	
+	// 	ofs << "CELL_DATA " << numCells << std::endl;
+	// 	ofs << "SCALARS Strain double " << std::endl;
+	// 	ofs << "LOOKUP_TABLE default "  << std::endl;
+	// 	//set strain for each edge
+
+	// 	for (int edge = 0; edge < SYSTEM->coordInfoVecs_daughter.num_edges; edge++ ){
+
+	// 		int idA = SYSTEM->coordInfoVecs_daughter.edges2Nodes_1[edge];
+	// 		int idB = SYSTEM->coordInfoVecs_daughter.edges2Nodes_2[edge];
+
+	// 		//if (idA >= SYSTEM->generalParams.maxNodeCount && idA != INT_MAX)
+	// 		//	std::cout<<idA<<std::endl;
+	// 		//if (idB >= SYSTEM->generalParams.maxNodeCount && idB != INT_MAX)
+	// 		//	std::cout<<idB<<std::endl;
+	// 		if (idA >= (INT_MAX-100) || idB >= (INT_MAX-100) || idA < 0 || idB < 0){
+	// 			continue;
+	// 		}
+	// 		double L0 = SYSTEM->generalParams.Rmin;
+	// 		double xL = SYSTEM->coordInfoVecs_daughter.nodeLocX[idA];
+	// 		double yL = SYSTEM->coordInfoVecs_daughter.nodeLocY[idA];
+	// 		double zL = SYSTEM->coordInfoVecs_daughter.nodeLocZ[idA];
+	// 		double xR = SYSTEM->coordInfoVecs_daughter.nodeLocX[idB];
+	// 		double yR = SYSTEM->coordInfoVecs_daughter.nodeLocY[idB];
+	// 		double zR = SYSTEM->coordInfoVecs_daughter.nodeLocZ[idB];
+			
+	// 		double L1 = sqrt( (xL - xR)*(xL - xR)+(yL - yR)*(yL - yR)+(zL - zR)*(zL - zR));
+	// 		double strain = (L1 - L0) / L0;
+	// 		ofs << std::fixed << strain   << std::endl;
+				
+			
+	// 	}
+	// 	ofs << std::fixed << 0.1   << std::endl;
+			
+	// 	ofs.close();
+	
+	// }
 
 	//now print out the file for the capsid
 	/*if ((SYSTEM)) {
@@ -258,7 +422,19 @@ void Storage::storeVariables(void) {
 		int digits = ceil(log10(iteration2 + 1));
 		std::string format = ".sta";
 		std::string Number;
-		std::string initial = "Variables_realistic/YB_cellwall4_l0d3b0d015_strain0d01_noes_rigidring_dt0d0005_";
+		//std::string initial = "Animation_new/New_MC_interval_";
+		//std::string initial = "Animation_realistic_anneal/attempt1_kT3d0anneal_ks7d2_kb15_adh15_dt0d0002_";
+		//std::string initial = "Animation_QN/ss0d025_kT_0d5_QN_";
+		//std::string initial = "Animation_realistic_kT1d0/atp1_kT1d0_ks7d2_kb15_adh3d75_dt0d0002_";
+		//std::string initial = "Animation_5nm/atp1_kT2d5_ks28d8_kb15_ka720_adh15_dt0d0002_";
+		//std::string initial = "Animation_realistic_finaltry/wrap_v0d0001_dt0d0001_newrange_";
+		//std::string initial = "Animation_realistic/membrane_";//volumetest40_n2d0lowhem10_ka0_eqvol1d5_";//spheretest_rad0d17549_lowerhem5_ka5_ks25kb5_LJR2_"; //Anneal_adh15_Rv0d75_MD20a7d5_v0d2_NKBT4000_dt0d0002_";
+		//std::string initial = "Animation_realistic/yeastbudding_septinring_test_3particle_";
+		//std::string initial = "Variables_realistic/YB_reactive_isotropic_scalels0d01bs0d01as0d01_vols4d0_expthresh1d5rule1_";//yeastbudding_septin40_test_6particle_1pullonly_";
+		//std::string initial = "Variables_realistic/YB_cellwall3_l0d2b0d05a0d2_edgegrowth_areastrain0d2_maxt400_esfreq100_longsim200_";
+		std::string initial = "Variables_realistic9/YB_cellwall4_l0d5b0d05_st0d05_dampedring400_dt0d001_tau25_tipweakrange1d0_longsim_tipesonly_";
+		//std::string initial = "Variables_realistic6/YB_cellwall3_l1d0b0d02a1d0_kT0d07_detgrowth_strain0d1_septin200_surfacegrowth_";
+		//std::string initial = "Animation_realistic_flow/Pflow0d5_v0d0005_MRT0d005_dt0d0002_";
 		std::ofstream ofs;
 		if (digits == 1 || digits == 0) {
 			Number = "0000" + std::to_string(iteration2);
@@ -305,18 +481,20 @@ void Storage::storeVariables(void) {
 		
 		ofs << std::setprecision(5) <<std::fixed<<"number of LJ particles "<<numParticles<<std::endl;
 		
-		for (int i = 0; i < SYSTEM->coordInfoVecs.num_edges; i++){
-			ofs << std::setprecision(5) <<std::fixed<<"Angle = "<<SYSTEM->generalParams.angle_per_edge[i]<<std::endl;
-		}
+		// for (int i = 0; i < SYSTEM->coordInfoVecs.num_edges; i++){
+		// 	ofs << std::setprecision(5) <<std::fixed<<"Angle = "<<SYSTEM->generalParams.angle_per_edge[i]<<std::endl;
+		// }
 
 		//place nodes
-		// for (int i = 0; i < SYSTEM->generalParams.maxNodeCount; i++){//SYSTEM->coordInfoVecs.nodeLocX.size(); i++) {
-		// 	double x = SYSTEM->coordInfoVecs.nodeLocX[i];
-		// 	double y = SYSTEM->coordInfoVecs.nodeLocY[i];
-		// 	double z = SYSTEM->coordInfoVecs.nodeLocZ[i];
-		// 	ofs << std::setprecision(5) <<std::fixed<< "<node> " << x << " " << y << " " << z <<" </node>"<<std::endl;
+		for (int i = 0; i < SYSTEM->generalParams.maxNodeCount; i++){//SYSTEM->coordInfoVecs.nodeLocX.size(); i++) {
+			double x = SYSTEM->coordInfoVecs.nodeLocX[i];
+			double y = SYSTEM->coordInfoVecs.nodeLocY[i];
+			double z = SYSTEM->coordInfoVecs.nodeLocZ[i];
+			double nodes_in_tip = SYSTEM->generalParams.nodes_in_tip[i];
+			double nodes_in_upperhem = SYSTEM->generalParams.nodes_in_upperhem[i];
+			ofs << std::setprecision(5) <<std::fixed<< x << " " << y << " " << z <<" "<<nodes_in_tip<<" "<<nodes_in_upperhem<<std::endl;
 		
-		// }
+		}
 
 		// for (int i = 0; i < SYSTEM->coordInfoVecs.num_triangles; i++){//SYSTEM->coordInfoVecs.triangles2Nodes_1.size(); i++) {
 		// 	int t2n_1 = SYSTEM->coordInfoVecs.triangles2Nodes_1[i];
@@ -368,10 +546,10 @@ void Storage::storeVariables(void) {
 		// 	int nn7 = SYSTEM->coordInfoVecs.nndata7[i];
 		// 	int nn8 = SYSTEM->coordInfoVecs.nndata8[i];
 		// 	int nn9 = SYSTEM->coordInfoVecs.nndata9[i];
-		// 	int nn10 = SYSTEM->coordInfoVecs.nndata10[i];
-		// 	int nn11 = SYSTEM->coordInfoVecs.nndata11[i];
-		// 	int nn12 = SYSTEM->coordInfoVecs.nndata12[i];
-		// 	ofs << std::setprecision(5) <<std::fixed<< "<nndata> " << nn1+1 << " " << nn2+1 <<" "<< nn3+1 <<" "<< nn4+1 <<" "<< nn5+1 <<" "<< nn6+1 <<" "<< nn7+1 <<" "<< nn8+1 <<" "<< nn9+1 <<" "<< nn10+1 <<" "<< nn11+1 <<" "<< nn12+1 <<" </nndata> "<<std::endl;
+		// 	// int nn10 = SYSTEM->coordInfoVecs.nndata10[i];
+		// 	// int nn11 = SYSTEM->coordInfoVecs.nndata11[i];
+		// 	// int nn12 = SYSTEM->coordInfoVecs.nndata12[i];
+		// 	ofs << std::setprecision(5) <<std::fixed<< "<nndata> " << nn1+1 << " " << nn2+1 <<" "<< nn3+1 <<" "<< nn4+1 <<" "<< nn5+1 <<" "<< nn6+1 <<" "<< nn7+1 <<" "<< nn8+1 <<" "<< nn9+1 <<" </nndata> "<<std::endl;
 		
 		// }
 

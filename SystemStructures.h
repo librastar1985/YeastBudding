@@ -95,6 +95,9 @@ struct HostSetInfoVecs {
 	thrust::host_vector<int> edges_in_upperhem;
 	thrust::host_vector<int> edges_in_upperhem_list;
 	thrust::host_vector<int> boundaries_in_upperhem;
+	thrust::host_vector<int> nodes_in_tip;
+	thrust::host_vector<int> edges_in_tip;
+	thrust::host_vector<int> triangles_in_tip;
 
 	thrust::host_vector<int> nodes2Triangles_1;
 	thrust::host_vector<int> nodes2Triangles_2;

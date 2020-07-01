@@ -190,15 +190,19 @@ std::shared_ptr<System> createSystem(const char* schemeFile, std::shared_ptr<Sys
 //std::cout<<"Error3"<<std::endl;
 	//add indices of nndata (neighboring nodes of node "i")
 	for (auto nndata = nndatas.child("nndata"); nndata; nndata = nndata.next_sibling("nndata")) {
-		if (12 != sscanf(nndata.text().as_string(""), "%u %u %u %u %u %u %u %u %u %u %u %u" , &E1, &E2, &E3, &E4, &E5, &E6, &E7, &E8, &E9, &E10, &E11, &E12)) {
+		//std::cout<<"ERROR "<<nndata<<std::endl;
+		if (9 != sscanf(nndata.text().as_string(""), "%u %u %u %u %u %u %u %u %u" , &E1, &E2, &E3, &E4, &E5, &E6, &E7, &E8, &E9)) {
+		//if (12 != sscanf(nndata.text().as_string(""), "%u %u %u %u %u %u %u %u %u %u %u %u" , &E1, &E2, &E3, &E4, &E5, &E6, &E7, &E8, &E9, &E10, &E11, &E12)) {
 			std::cout << "parse nndata error\n";
 			return 0;
 		}
 		else{
 			
 		}
+
 		//std::cout << "putting spring between: " << from << ' ' <<to<<  std::endl;
-		builder->addNndata(E1-1, E2-1, E3-1, E4-1, E5-1, E6-1, E7-1, E8-1, E9-1, E10-1, E11-1, E12-1); //adds edges into saved vectors
+		builder->addNndata(E1-1, E2-1, E3-1, E4-1, E5-1, E6-1, E7-1, E8-1, E9-1); //adds edges into saved vectors
+		//builder->addNndata(E1-1, E2-1, E3-1, E4-1, E5-1, E6-1, E7-1, E8-1, E9-1, E10-1, E11-1, E12-1); //adds edges into saved vectors
 	};
 	std::cout<<"parse nndata success"<<std::endl;
 //	std::cout<<"Error4"<<std::endl;

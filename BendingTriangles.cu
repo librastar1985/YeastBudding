@@ -46,6 +46,7 @@ void ComputeCosTriangleSprings(
             bendingTriangleInfoVecs.spring_constant,
             bendingTriangleInfoVecs.spring_constant_weak,
             thrust::raw_pointer_cast(generalParams.edges_in_upperhem.data()),
+            thrust::raw_pointer_cast(generalParams.edges_in_tip.data()),
             thrust::raw_pointer_cast(generalParams.boundaries_in_upperhem.data()),
             bendingTriangleInfoVecs.initial_angle, 
             //bendingTriangleInfoVecs.initial_angle_bud,       

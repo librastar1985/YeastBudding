@@ -50,6 +50,7 @@ void ComputeLinearSprings(
             generalParams.Rmin,
             //generalParams.Rmin_growth,
             thrust::raw_pointer_cast(generalParams.edges_in_upperhem.data()),
+            thrust::raw_pointer_cast(generalParams.edges_in_tip.data()),
             //thrust::raw_pointer_cast(generalParams.boundaries_in_upperhem.data()),
             thrust::raw_pointer_cast(coordInfoVecs.nodeLocX.data()),
             thrust::raw_pointer_cast(coordInfoVecs.nodeLocY.data()),

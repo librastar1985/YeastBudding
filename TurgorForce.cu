@@ -1,8 +1,8 @@
 #include "System.h"
 #include "SystemStructures.h"
-#include "AreaTriangles.h"
+#include "TurgorForce.h"
 
-void ComputeAreaTriangleSprings(
+void ComputeTurgorSprings(
     GeneralParams& generalParams,
     CoordInfoVecs& coordInfoVecs,
     AreaTriangleInfoVecs& areaTriangleInfoVecs) {
@@ -17,7 +17,7 @@ void ComputeAreaTriangleSprings(
         thrust::fill(areaTriangleInfoVecs.tempNodeForceZUnreduced.begin(),areaTriangleInfoVecs.tempNodeForceZUnreduced.end(),0.0);
     
         
-        areaTriangleInfoVecs.area_triangle_energy = thrust::transform_reduce( 
+        areaTriangleInfoVecs.dummy = thrust::transform_reduce( 
 			thrust::make_zip_iterator(
 				thrust::make_tuple(
                     elemId,
@@ -36,18 +36,8 @@ void ComputeAreaTriangleSprings(
                     coordInfoVecs.triangles2Edges_1.begin(),
                     coordInfoVecs.triangles2Edges_2.begin(),
                     coordInfoVecs.triangles2Edges_3.begin())) + coordInfoVecs.num_triangles,
-            AreaSpringFunctor( 
-                generalParams.SCALE_TYPE,
-                generalParams.scaling_pow,
-                generalParams.gausssigma,
-                generalParams.hilleqnconst,
-                generalParams.hilleqnpow,
-                thrust::raw_pointer_cast(coordInfoVecs.scaling_per_edge.data()),
-                areaTriangleInfoVecs.initial_area,
-                areaTriangleInfoVecs.spring_constant,
-                areaTriangleInfoVecs.spring_constant_weak,
-                thrust::raw_pointer_cast(generalParams.triangles_in_upperhem.data()),
-                thrust::raw_pointer_cast(generalParams.triangles_in_tip.data()),
+            TurgorSpringFunctor( 
+                generalParams.volume_spring_constant,
                 thrust::raw_pointer_cast(coordInfoVecs.nodeLocX.data()),
                 thrust::raw_pointer_cast(coordInfoVecs.nodeLocY.data()),
                 thrust::raw_pointer_cast(coordInfoVecs.nodeLocZ.data()),

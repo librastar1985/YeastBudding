@@ -17,6 +17,7 @@ class Storage {
 	
 	
 	int iteration = 0;
+	int iteration_daughter = 0;
 	int iteration2 = 0;
 
 public: 

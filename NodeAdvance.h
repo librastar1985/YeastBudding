@@ -42,17 +42,17 @@ struct SaxpyFunctorPrimary : public thrust::binary_function<BoolCVec3, CVec3, CV
 		bool isFixed = thrust::get<0>(p3);//true if fixed, false if movable. 
 
 		if (isFixed == false) {
-			double xLocNew = thrust::get<1>(p3) + dt/mass * (thrust::get<0>(f3) );
-			double yLocNew = thrust::get<2>(p3) + dt/mass * thrust::get<1>(f3);
-			double zLocNew = thrust::get<3>(p3) + dt/mass * thrust::get<2>(f3);
+			double xLocNew = thrust::get<1>(p3) + dt * (thrust::get<0>(f3) );//dt/mass * (thrust::get<0>(f3) );
+			double yLocNew = thrust::get<2>(p3) + dt * thrust::get<1>(f3);//dt/mass * thrust::get<1>(f3);
+			double zLocNew = thrust::get<3>(p3) + dt * thrust::get<2>(f3);//dt/mass * thrust::get<2>(f3);
 
 
 			return thrust::make_tuple(xLocNew, yLocNew, zLocNew);
 		}
 		else {
 			//return thrust::make_tuple(thrust::get<1>(p3),thrust::get<2>(p3),thrust::get<3>(p3) );
-			double xLocNew = thrust::get<1>(p3);// + dt/mass * thrust::get<0>(f3);
-			double yLocNew = thrust::get<2>(p3); //+ dt/mass * thrust::get<1>(f3);
+			double xLocNew = thrust::get<1>(p3) + dt/mass * thrust::get<0>(f3);
+			double yLocNew = thrust::get<2>(p3) + dt/mass * thrust::get<1>(f3);
 			double zLocNew = thrust::get<3>(p3);
 			
 			return thrust::make_tuple(xLocNew, yLocNew, zLocNew);

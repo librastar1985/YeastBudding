@@ -315,6 +315,7 @@ struct LinearSpringInfoVecs {
 };
 
 struct GeneralParams{
+	double current_bud_area;
 	double kT;
 	double kT_growth;
 	double tau;
@@ -333,9 +334,12 @@ struct GeneralParams{
 	int edges_in_upperhem_list_length;
 	double growth_energy_scaling;
 	thrust::device_vector<int> edge_to_ljparticle;
+	thrust::device_vector<int> nodes_in_tip;
 	thrust::device_vector<int> nodes_in_upperhem;
 	thrust::device_vector<int> edges_in_upperhem;
 	thrust::device_vector<int> edges_in_upperhem_list;
+	thrust::device_vector<int> edges_in_tip;
+	thrust::device_vector<int> triangles_in_tip;
 	thrust::device_vector<int> triangles_in_upperhem;
 	thrust::device_vector<int> boundaries_in_upperhem;
 	thrust::device_vector<double> angle_per_edge;

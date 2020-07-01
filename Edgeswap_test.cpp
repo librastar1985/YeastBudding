@@ -3,6 +3,19 @@
 #include "Edgeswap_test.h"
 #include <math.h>
 
+
+
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//REMEMBER TO CHANGE THE NEXT LINE IF YOU CHANGE THE ACCEPTANCE RULE!
+//CURRENT SETUP: swap is always accepted for boltzmann.
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 Edgeswap::Edgeswap(CoordInfoVecs& coordInfoVecs,
 GeneralParams& generalParams) {
             
@@ -26,6 +39,187 @@ GeneralParams& generalParams) {
     nndata = nndata_temp;
 };
 
+//This function aims to have a fixed range or neighborhood around the tip be weakened uniformly
+void Edgeswap::gradient_weakening_update_host_vecs_tip(double sigma,
+    //double max_height_index,
+    double max_height_x,
+    double max_height_y,
+    double max_height_z,
+    double distance_to_boundary,
+    double distance_uniform_weak,
+    GeneralParams& generalParams,
+    CoordInfoVecs& coordInfoVecs,
+    HostSetInfoVecs& hostSetInfoVecs){
+
+        double pi = 3.1415927;
+    /* Scaling by gaussian distribution in the form of 
+    (1/sqrt(2*pi*sigma^2))*Exp(-(d/|d|)^2/(sigma^2))/(1/sqrt(2*pi*sigma^2))
+    */
+   double scale;
+   //double tip_threshold = 2.05*generalParams.Rmin;
+   bool scale_need = false;
+    if (pi < 0){
+    //if (sigma == INT_MAX){
+        //  for (int i = 0; i < coordInfoVecs.num_edges; i++){
+        //     if (hostSetInfoVecs.edges_in_upperhem[i] != 1){
+        //         hostSetInfoVecs.scaling_per_edge[i] = 0.0;
+        //         continue;
+        //     }
+        //     else{
+        //         hostSetInfoVecs.scaling_per_edge[i] = 1.0;
+        //     }
+        //  }
+    }
+    else{
+        for (int i = 0; i < coordInfoVecs.num_edges; i++){
+            int v1 = hostSetInfoVecs.edges2Nodes_1[i];
+            int v2 = hostSetInfoVecs.edges2Nodes_2[i];
+            if (hostSetInfoVecs.edges2Nodes_1[i] > (INT_MAX-100) || hostSetInfoVecs.edges2Nodes_1[i] < 0){
+                hostSetInfoVecs.scaling_per_edge[i] = -INT_MAX;
+                continue;
+            }
+            else if (hostSetInfoVecs.edges2Nodes_2[i] > (INT_MAX-100) || hostSetInfoVecs.edges2Nodes_2[i] < 0){
+                hostSetInfoVecs.scaling_per_edge[i] = -INT_MAX;
+                continue;
+            }
+            double avg_z = (hostSetInfoVecs.nodeLocZ[v1] + hostSetInfoVecs.nodeLocZ[v2])/2.0;
+            if (hostSetInfoVecs.edges_in_upperhem[i] != 1 && hostSetInfoVecs.edges_in_upperhem[i] != 0){
+                if (avg_z < generalParams.boundary_z){
+                    hostSetInfoVecs.scaling_per_edge[i] = 1.0;
+                    continue;
+                }
+                else{
+                    double avg_x = (hostSetInfoVecs.nodeLocX[v1] + hostSetInfoVecs.nodeLocX[v2])/2.0;
+                    double avg_y = (hostSetInfoVecs.nodeLocY[v1] + hostSetInfoVecs.nodeLocY[v2])/2.0;
+                    double avg_z = (hostSetInfoVecs.nodeLocZ[v1] + hostSetInfoVecs.nodeLocZ[v2])/2.0;
+                    double dtt = sqrt((max_height_x - avg_x)*(max_height_x - avg_x) +
+                                                (max_height_y - avg_y)*(max_height_y - avg_y) +
+                                                (max_height_z - avg_z)*(max_height_z - avg_z));
+                    //double dtt = sqrt((hostSetInfoVecs.nodeLocX[max_height_index] - avg_x)*(hostSetInfoVecs.nodeLocX[max_height_index] - avg_x) +
+                      //                          (hostSetInfoVecs.nodeLocY[max_height_index] - avg_y)*(hostSetInfoVecs.nodeLocY[max_height_index] - avg_y) +
+                        //                        (hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)*(hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)); //dtt := distance to tip
+                    //scale = (1.0/sqrt(2.0*pi*sigma*sigma))*exp(-(dtt/distance_to_boundary)*(dtt/distance_to_boundary)/(sigma*sigma));///(1.0/sqrt(2.0*pi*sigma*sigma));
+                    //double dtt = sqrt((hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)*(hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z));
+                    scale = ((dtt-distance_uniform_weak)/(distance_to_boundary-distance_uniform_weak));
+                    
+                    if ((distance_to_boundary-distance_uniform_weak)<0.0){
+                        scale = 0.0;
+                    }
+                    else if (scale > 1.0){
+                        scale = 1.0;
+                    }
+                    else if (scale < 0.0){
+                        scale = 0.0;
+                    }
+                    else{}
+                    scale_need = true;
+                }
+            }
+           
+            
+           
+
+            if (generalParams.edges_in_upperhem[i] == 1 || generalParams.edges_in_upperhem[i] == 0){//(generalParams.nodes_in_upperhem[v1] == 1 && generalParams.nodes_in_upperhem[v2] == 1){
+                double avg_x = (hostSetInfoVecs.nodeLocX[v1] + hostSetInfoVecs.nodeLocX[v2])/2.0;
+                double avg_y = (hostSetInfoVecs.nodeLocY[v1] + hostSetInfoVecs.nodeLocY[v2])/2.0;
+                double avg_z = (hostSetInfoVecs.nodeLocZ[v1] + hostSetInfoVecs.nodeLocZ[v2])/2.0;
+                double dtt = sqrt((max_height_x - avg_x)*(max_height_x - avg_x) +
+                                                (max_height_y - avg_y)*(max_height_y - avg_y) +
+                                                (max_height_z - avg_z)*(max_height_z - avg_z));
+                //double dtt = sqrt((hostSetInfoVecs.nodeLocX[max_height_index] - avg_x)*(hostSetInfoVecs.nodeLocX[max_height_index] - avg_x) +
+                  //                          (hostSetInfoVecs.nodeLocY[max_height_index] - avg_y)*(hostSetInfoVecs.nodeLocY[max_height_index] - avg_y) +
+                    //                        (hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)*(hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)); //dtt := distance to tip
+                //scale = (1.0/sqrt(2.0*pi*sigma*sigma))*exp(-(dtt/distance_to_boundary)*(dtt/distance_to_boundary)/(sigma*sigma));///(1.0/sqrt(2.0*pi*sigma*sigma));
+                //double dtt = sqrt((hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)*(hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z));
+                scale = ((dtt-distance_uniform_weak)/(distance_to_boundary-distance_uniform_weak));
+                
+                
+                //if (dtt < tip_threshold){
+                //    scale = 1.0;
+                //}
+                //else {
+                //    scale = ((dtt - tip_threshold)/(distance_to_boundary - tip_threshold));
+                //}
+                if ((distance_to_boundary-distance_uniform_weak) < 0.0){
+                    scale = 0.0;
+                }
+                else if (scale > 1.0){
+                    scale = 1.0;
+                }
+                else if (scale < 0.0){
+                    scale = 0.0;
+                }
+                else{}
+                //std::cout<<"dtt/distance_to_boundary = "<<dtt/distance_to_boundary<<std::endl;
+            // coordInfoVecs.scaling_per_edge[i] = scale;
+                scale_need = true;
+            }
+            /*else if (generalParams.nodes_in_upperhem[v1] == 1 && generalParams.nodes_in_upperhem[v2] == 0){
+                double avg_x = (hostSetInfoVecs.nodeLocX[v1] + hostSetInfoVecs.nodeLocX[v2])/2.0;
+                double avg_y = (hostSetInfoVecs.nodeLocY[v1] + hostSetInfoVecs.nodeLocY[v2])/2.0;
+                double avg_z = (hostSetInfoVecs.nodeLocZ[v1] + hostSetInfoVecs.nodeLocZ[v2])/2.0;
+                double dtt = sqrt((hostSetInfoVecs.nodeLocX[max_height_index] - avg_x)*(hostSetInfoVecs.nodeLocX[max_height_index] - avg_x) +
+                                            (hostSetInfoVecs.nodeLocY[max_height_index] - avg_y)*(hostSetInfoVecs.nodeLocY[max_height_index] - avg_y) +
+                                            (hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)*(hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)); //dtt := distance to tip
+                //scale = (1.0/sqrt(2.0*pi*sigma*sigma))*exp(-(dtt/distance_to_boundary)*(dtt/distance_to_boundary)/(sigma*sigma));///(1.0/sqrt(2.0*pi*sigma*sigma));
+                scale = (dtt/distance_to_boundary);
+                if (scale > 1.0){
+                    scale = 1.0;
+                }
+                else{}
+                //std::cout<<"dtt/distance_to_boundary = "<<dtt/distance_to_boundary<<std::endl;
+                //coordInfoVecs.scaling_per_edge[i] = scale;
+                scale_need = true;
+            }
+            else if (generalParams.nodes_in_upperhem[v1] == 0 && generalParams.nodes_in_upperhem[v2] == 1){
+                double avg_x = (hostSetInfoVecs.nodeLocX[v1] + hostSetInfoVecs.nodeLocX[v2])/2.0;
+                double avg_y = (hostSetInfoVecs.nodeLocY[v1] + hostSetInfoVecs.nodeLocY[v2])/2.0;
+                double avg_z = (hostSetInfoVecs.nodeLocZ[v1] + hostSetInfoVecs.nodeLocZ[v2])/2.0;
+                double dtt = sqrt((hostSetInfoVecs.nodeLocX[max_height_index] - avg_x)*(hostSetInfoVecs.nodeLocX[max_height_index] - avg_x) +
+                                            (hostSetInfoVecs.nodeLocY[max_height_index] - avg_y)*(hostSetInfoVecs.nodeLocY[max_height_index] - avg_y) +
+                                            (hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)*(hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)); //dtt := distance to tip
+                //scale = (1.0/sqrt(2.0*pi*sigma*sigma))*exp(-(dtt/distance_to_boundary)*(dtt/distance_to_boundary)/(sigma*sigma));///(1.0/sqrt(2.0*pi*sigma*sigma));
+                scale = (dtt/distance_to_boundary);
+                if (scale > 1.0){
+                    scale = 1.0;
+                }
+                else{}
+                //std::cout<<"dtt/distance_to_boundary = "<<dtt/distance_to_boundary<<std::endl;
+                //coordInfoVecs.scaling_per_edge[i] = scale;
+                scale_need = true;
+            }
+            else if (generalParams.nodes_in_upperhem[v1] == 0 && generalParams.nodes_in_upperhem[v2] == 0){
+                double avg_x = (hostSetInfoVecs.nodeLocX[v1] + hostSetInfoVecs.nodeLocX[v2])/2.0;
+                double avg_y = (hostSetInfoVecs.nodeLocY[v1] + hostSetInfoVecs.nodeLocY[v2])/2.0;
+                double avg_z = (hostSetInfoVecs.nodeLocZ[v1] + hostSetInfoVecs.nodeLocZ[v2])/2.0;
+                double dtt = sqrt((hostSetInfoVecs.nodeLocX[max_height_index] - avg_x)*(hostSetInfoVecs.nodeLocX[max_height_index] - avg_x) +
+                                            (hostSetInfoVecs.nodeLocY[max_height_index] - avg_y)*(hostSetInfoVecs.nodeLocY[max_height_index] - avg_y) +
+                                            (hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)*(hostSetInfoVecs.nodeLocZ[max_height_index] - avg_z)); //dtt := distance to tip
+               // scale = (1.0/sqrt(2.0*pi*sigma*sigma))*exp(-(dtt/distance_to_boundary)*(dtt/distance_to_boundary)/(sigma*sigma));///(1.0/sqrt(2.0*pi*sigma*sigma));
+                scale = (dtt/distance_to_boundary);
+                if (scale > 1.0){
+                    scale = 1.0;
+                }
+                else{}
+                //std::cout<<"dtt/distance_to_boundary = "<<dtt/distance_to_boundary<<std::endl;
+                //coordInfoVecs.scaling_per_edge[i] = 1.0;//scale;
+                scale_need = true;
+            }*/
+            else{
+                //coordInfoVecs.scaling_per_edge[i] = 0.0;
+            }
+
+            if (scale_need == true){
+                hostSetInfoVecs.scaling_per_edge[i] = scale;
+            }
+            else{
+                hostSetInfoVecs.scaling_per_edge[i] = 1.0;
+            }
+        }
+    }
+};
+
+//This function is for hill function type weakening purpose
 void Edgeswap::gradient_weakening_update_host_vecs(double sigma,
     //double max_height_index,
     double max_height_x,
@@ -42,7 +236,7 @@ void Edgeswap::gradient_weakening_update_host_vecs(double sigma,
     (1/sqrt(2*pi*sigma^2))*Exp(-(d/|d|)^2/(sigma^2))/(1/sqrt(2*pi*sigma^2))
     */
    double scale;
-   double tip_threshold = 2.05*generalParams.Rmin;
+   //double tip_threshold = 2.05*generalParams.Rmin;
    bool scale_need = false;
     if (pi < 0){
     //if (sigma == INT_MAX){
@@ -122,7 +316,7 @@ void Edgeswap::gradient_weakening_update_host_vecs(double sigma,
                 //}
 
                 if (scale > 1.0){
-                    scale = 0.0;
+                    scale = 1.0;
                 }
                 else{}
                 //std::cout<<"dtt/distance_to_boundary = "<<dtt/distance_to_boundary<<std::endl;
@@ -1633,6 +1827,8 @@ int Edgeswap::edge_swap_host_vecs(
                 if (linear_spring_constant < linearSpringInfoVecs.spring_constant_weak){linear_spring_constant = linearSpringInfoVecs.spring_constant_weak;};
             }
             else if (generalParams.SCALE_TYPE == 1){
+                // linear_spring_constant = (linearSpringInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[0]], generalParams.scaling_pow) + 
+                //                         linearSpringInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[0]],generalParams.scaling_pow));
                 linear_spring_constant = linearSpringInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[0]], generalParams.scaling_pow) + 
                                         linearSpringInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[0]],generalParams.scaling_pow));
             }
@@ -1642,11 +1838,12 @@ int Edgeswap::edge_swap_host_vecs(
                                     hostSetInfoVecs.scaling_per_edge[edges_iteration[0]];
             }
             else if (generalParams.SCALE_TYPE == 3){
-                if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[0]] == 1){
+                if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[0]] == 1 && hostSetInfoVecs.edges_in_tip[edges_iteration[0]] == 1){
                         linear_spring_constant = linearSpringInfoVecs.spring_constant_weak;
                     }
-                    else if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[0]] == 0){
-                        linear_spring_constant = (linearSpringInfoVecs.spring_constant_weak + linearSpringInfoVecs.spring_constant)/2.0;
+                    else if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[0]] == 0 && hostSetInfoVecs.edges_in_tip[edges_iteration[0]] == 0){
+                        linear_spring_constant = (linearSpringInfoVecs.spring_constant_weak*2.0);
+                        //linear_spring_constant = (linearSpringInfoVecs.spring_constant_weak + linearSpringInfoVecs.spring_constant)/2.0;
                     }
                     else{
                         linear_spring_constant = linearSpringInfoVecs.spring_constant;
@@ -1658,7 +1855,7 @@ int Edgeswap::edge_swap_host_vecs(
 			    double spectrum = linearSpringInfoVecs.spring_constant - linearSpringInfoVecs.spring_constant_weak;
                 linear_spring_constant = linearSpringInfoVecs.spring_constant_weak + ((1.0/(1.0+pow(generalParams.hilleqnconst/hostSetInfoVecs.scaling_per_edge[edges_iteration[0]], generalParams.hilleqnpow)))*spectrum);
                 if (linear_spring_constant < linearSpringInfoVecs.spring_constant_weak){linear_spring_constant = linearSpringInfoVecs.spring_constant_weak;}
-		}
+		    }
             
                 int wrong1, wrong2, wrong3;
                 for (int j = 0; j < 5; j++){
@@ -1685,8 +1882,10 @@ int Edgeswap::edge_swap_host_vecs(
                         }*/
                     }
                     else if (generalParams.SCALE_TYPE == 1){
-                        bend_spring_constant = bendingTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow) +
+                        bend_spring_constant = (bendingTriangleInfoVecs.spring_constant_weak*4.0)*pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow) +
                                             bendingTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow));
+                        // bend_spring_constant = bendingTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow) +
+                        //                     bendingTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow));
                     }   
                     else if (generalParams.SCALE_TYPE == 2){
                         bend_spring_constant = bendingTriangleInfoVecs.spring_constant_weak - 
@@ -1694,12 +1893,13 @@ int Edgeswap::edge_swap_host_vecs(
                                             hostSetInfoVecs.scaling_per_edge[edges_iteration[j]];
                     }
                     else if (generalParams.SCALE_TYPE == 3){
-                        if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[j]] == 1){
+                        if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[j]] == 1 && hostSetInfoVecs.edges_in_tip[edges_iteration[j]] == 1){
                         bend_spring_constant = bendingTriangleInfoVecs.spring_constant_weak;
                         preferred_angle = bendingTriangleInfoVecs.initial_angle;//bendingTriangleInfoVecs.initial_angle_bud;
                         }
-                        else if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[j]] == 0){
-                            bend_spring_constant = (bendingTriangleInfoVecs.spring_constant_weak + bendingTriangleInfoVecs.spring_constant)/2.0;
+                        else if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[j]] == 1 && hostSetInfoVecs.edges_in_tip[edges_iteration[j]] != 1){
+                            bend_spring_constant = (bendingTriangleInfoVecs.spring_constant_weak*2.0);
+                            //bend_spring_constant = (bendingTriangleInfoVecs.spring_constant_weak + bendingTriangleInfoVecs.spring_constant)/2.0;
                             preferred_angle = bendingTriangleInfoVecs.initial_angle;//(bendingTriangleInfoVecs.initial_angle_bud + bendingTriangleInfoVecs.initial_angle)/2.0;
                         }
                         else{
@@ -2144,9 +2344,12 @@ int Edgeswap::edge_swap_host_vecs(
                                             if (area_spring_constant_1 < areaTriangleInfoVecs.spring_constant_weak){area_spring_constant_1 = areaTriangleInfoVecs.spring_constant_weak;}
             }
             else if(generalParams.SCALE_TYPE == 1){
-             area_spring_constant_1 = (areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
-                                        areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow)) +
-                                        areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow)))/3.0;
+                area_spring_constant_1 = ((areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
+                                        (areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow)) +
+                                        (areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow)))/3.0;
+            //  area_spring_constant_1 = (areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
+            //                             areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow)) +
+            //                             areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow)))/3.0;
             }
             else if (generalParams.SCALE_TYPE == 2){
              area_spring_constant_1 = ((areaTriangleInfoVecs.spring_constant - (areaTriangleInfoVecs.spring_constant - areaTriangleInfoVecs.spring_constant_weak)*hostSetInfoVecs.scaling_per_edge[iedge]) +
@@ -2154,11 +2357,12 @@ int Edgeswap::edge_swap_host_vecs(
                                         (areaTriangleInfoVecs.spring_constant - (areaTriangleInfoVecs.spring_constant - areaTriangleInfoVecs.spring_constant_weak)*hostSetInfoVecs.scaling_per_edge[H2]))/3.0;
             }
             else if (generalParams.SCALE_TYPE == 3){
-                if (hostSetInfoVecs.triangles_in_upperhem[H0] == 1){
+                if (hostSetInfoVecs.triangles_in_upperhem[H0] == 1 && hostSetInfoVecs.triangles_in_tip[H0] == 1){
                     area_spring_constant_1 = areaTriangleInfoVecs.spring_constant_weak;
                 }
-                else if (hostSetInfoVecs.triangles_in_upperhem[H0] == 0){
-                    area_spring_constant_1 = (areaTriangleInfoVecs.spring_constant_weak + areaTriangleInfoVecs.spring_constant)/2.0;
+                else if (hostSetInfoVecs.triangles_in_upperhem[H0] == 1 && hostSetInfoVecs.triangles_in_tip[H0] != 1){
+                    area_spring_constant_1 = (areaTriangleInfoVecs.spring_constant_weak*2.0);
+                    //area_spring_constant_1 = (areaTriangleInfoVecs.spring_constant_weak + areaTriangleInfoVecs.spring_constant)/2.0;
                 }
                 else{
                     area_spring_constant_1 = areaTriangleInfoVecs.spring_constant;
@@ -2192,9 +2396,12 @@ int Edgeswap::edge_swap_host_vecs(
                                             if (area_spring_constant_2 < areaTriangleInfoVecs.spring_constant_weak){area_spring_constant_2 = areaTriangleInfoVecs.spring_constant_weak;}
             }
             else if (generalParams.SCALE_TYPE == 1){
-                area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
-                                        areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow)) +
-                                        areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow)))/3.0;
+                area_spring_constant_2 = ((areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
+                                        (areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow)) +
+                                        (areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow)))/3.0;
+                // area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
+                //                         areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow)) +
+                //                         areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow)))/3.0;
             }
             else if (generalParams.SCALE_TYPE == 2){
                 area_spring_constant_2 = ((areaTriangleInfoVecs.spring_constant - (areaTriangleInfoVecs.spring_constant - areaTriangleInfoVecs.spring_constant_weak)*hostSetInfoVecs.scaling_per_edge[iedge]) +
@@ -2202,11 +2409,12 @@ int Edgeswap::edge_swap_host_vecs(
                                         (areaTriangleInfoVecs.spring_constant - (areaTriangleInfoVecs.spring_constant - areaTriangleInfoVecs.spring_constant_weak)*hostSetInfoVecs.scaling_per_edge[T2]))/3.0;
             }
             else if (generalParams.SCALE_TYPE == 3){
-                if (hostSetInfoVecs.triangles_in_upperhem[T0] == 1){
+                if (hostSetInfoVecs.triangles_in_upperhem[T0] == 1 && hostSetInfoVecs.triangles_in_tip[T0] == 1){
                 area_spring_constant_2 = areaTriangleInfoVecs.spring_constant_weak;
                 }
-                else if (hostSetInfoVecs.triangles_in_upperhem[T0] == 0){
-                    area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant_weak + areaTriangleInfoVecs.spring_constant)/2.0;
+                else if (hostSetInfoVecs.triangles_in_upperhem[T0] == 1 && hostSetInfoVecs.triangles_in_tip[T0] != 1){
+                    area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant_weak*2.0);
+                    //area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant_weak + areaTriangleInfoVecs.spring_constant)/2.0;
                 }
                 else{
                     area_spring_constant_2 = areaTriangleInfoVecs.spring_constant;
@@ -2602,8 +2810,10 @@ int Edgeswap::edge_swap_host_vecs(
                         }*/
                     }
                     else if (generalParams.SCALE_TYPE == 1){
-                        bend_spring_constant = bendingTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow) +
-                                            bendingTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow));
+                        bend_spring_constant = (bendingTriangleInfoVecs.spring_constant_weak*4.0)*pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow) +
+                                            (bendingTriangleInfoVecs.spring_constant_weak)*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow));
+                        // bend_spring_constant = bendingTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow) +
+                        //                     bendingTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[edges_iteration[j]],generalParams.scaling_pow));
                     }
                     else if (generalParams.SCALE_TYPE == 2){
                         bend_spring_constant = bendingTriangleInfoVecs.spring_constant_weak - 
@@ -2611,12 +2821,13 @@ int Edgeswap::edge_swap_host_vecs(
                                             hostSetInfoVecs.scaling_per_edge[edges_iteration[j]];
                     }
                     else if (generalParams.SCALE_TYPE == 3){
-                        if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[j]] == 1){
+                        if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[j]] == 1 && hostSetInfoVecs.edges_in_tip[edges_iteration[j]] == 1){
                             bend_spring_constant = bendingTriangleInfoVecs.spring_constant_weak;
                             preferred_angle = bendingTriangleInfoVecs.initial_angle;//bendingTriangleInfoVecs.initial_angle_bud;
                         }
-                        else if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[j]] == 0){
-                            bend_spring_constant = (bendingTriangleInfoVecs.spring_constant_weak + bendingTriangleInfoVecs.spring_constant)/2.0;
+                        else if (hostSetInfoVecs.edges_in_upperhem[edges_iteration[j]] == 1 && hostSetInfoVecs.edges_in_tip[edges_iteration[j]] != 1){
+                            bend_spring_constant = (bendingTriangleInfoVecs.spring_constant_weak*2.0);
+                            //bend_spring_constant = (bendingTriangleInfoVecs.spring_constant_weak + bendingTriangleInfoVecs.spring_constant)/2.0;
                             preferred_angle = bendingTriangleInfoVecs.initial_angle;//(bendingTriangleInfoVecs.initial_angle + bendingTriangleInfoVecs.initial_angle_bud)/2.0;
                         }
                         else{
@@ -2951,9 +3162,12 @@ int Edgeswap::edge_swap_host_vecs(
                                             if (area_spring_constant_1 < areaTriangleInfoVecs.spring_constant_weak){area_spring_constant_1 = areaTriangleInfoVecs.spring_constant_weak;}
                 }
                 else if (generalParams.SCALE_TYPE == 1 ){
-                    area_spring_constant_1 =  (areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
-                                        areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow)) +
-                                        areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow)))/3.0;
+                    area_spring_constant_1 =  ((areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
+                                       (areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow)) +
+                                       (areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow)))/3.0;
+                    // area_spring_constant_1 =  (areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
+                    //                     areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H1],generalParams.scaling_pow)) +
+                    //                     areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T1],generalParams.scaling_pow)))/3.0;
                 }
                 else if (generalParams.SCALE_TYPE == 2){
                     area_spring_constant_1 = ((areaTriangleInfoVecs.spring_constant - (areaTriangleInfoVecs.spring_constant - areaTriangleInfoVecs.spring_constant_weak)*hostSetInfoVecs.scaling_per_edge[iedge]) +
@@ -2961,11 +3175,12 @@ int Edgeswap::edge_swap_host_vecs(
                                         (areaTriangleInfoVecs.spring_constant - (areaTriangleInfoVecs.spring_constant - areaTriangleInfoVecs.spring_constant_weak)*hostSetInfoVecs.scaling_per_edge[T1]))/3.0;
                 }
                 else if (generalParams.SCALE_TYPE == 3){
-                    if (hostSetInfoVecs.triangles_in_upperhem[H0] == 1){
+                    if (hostSetInfoVecs.triangles_in_upperhem[H0] == 1 && hostSetInfoVecs.triangles_in_tip[H0] == 1){
                     area_spring_constant_1 = areaTriangleInfoVecs.spring_constant_weak;
                     }
-                    else if (hostSetInfoVecs.triangles_in_upperhem[H0] == 0){
-                        area_spring_constant_1 = (areaTriangleInfoVecs.spring_constant_weak + areaTriangleInfoVecs.spring_constant)/2.0;
+                    else if (hostSetInfoVecs.triangles_in_upperhem[H0] == 1 && hostSetInfoVecs.triangles_in_tip[H0] != 1){
+                        area_spring_constant_1 = (areaTriangleInfoVecs.spring_constant_weak*2.0);
+                        //area_spring_constant_1 = (areaTriangleInfoVecs.spring_constant_weak + areaTriangleInfoVecs.spring_constant)/2.0;
                     }
                     else{
                         area_spring_constant_1 = areaTriangleInfoVecs.spring_constant;
@@ -2998,9 +3213,12 @@ int Edgeswap::edge_swap_host_vecs(
                                             if (area_spring_constant_2 < areaTriangleInfoVecs.spring_constant_weak){area_spring_constant_2 = areaTriangleInfoVecs.spring_constant_weak;}
                 }
                 else if (generalParams.SCALE_TYPE == 1){
-                    area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
-                        areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow)) +
-                        areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow)))/3.0;
+                    area_spring_constant_2 = ((areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
+                        (areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow)) +
+                        (areaTriangleInfoVecs.spring_constant_weak*2.0)*pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow)))/3.0;
+                    // area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[iedge],generalParams.scaling_pow)) +
+                    //     areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[T2],generalParams.scaling_pow)) +
+                    //     areaTriangleInfoVecs.spring_constant*pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow) + areaTriangleInfoVecs.spring_constant_weak*(1.0 - pow(hostSetInfoVecs.scaling_per_edge[H2],generalParams.scaling_pow)))/3.0;
                 }
                 else if (generalParams.SCALE_TYPE == 2){
                     area_spring_constant_2 = ((areaTriangleInfoVecs.spring_constant - (areaTriangleInfoVecs.spring_constant - areaTriangleInfoVecs.spring_constant_weak)*hostSetInfoVecs.scaling_per_edge[iedge]) +
@@ -3008,11 +3226,12 @@ int Edgeswap::edge_swap_host_vecs(
                                         (areaTriangleInfoVecs.spring_constant - (areaTriangleInfoVecs.spring_constant - areaTriangleInfoVecs.spring_constant_weak)*hostSetInfoVecs.scaling_per_edge[H2]))/3.0;
                 }
                 else if (generalParams.SCALE_TYPE == 3){
-                    if (hostSetInfoVecs.triangles_in_upperhem[T0] == 1){
+                    if (hostSetInfoVecs.triangles_in_upperhem[T0] == 1 && hostSetInfoVecs.triangles_in_tip[T0] == 1){
                     area_spring_constant_2 = areaTriangleInfoVecs.spring_constant_weak;
                     }
-                    else if (hostSetInfoVecs.triangles_in_upperhem[T0] == 0){
-                        area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant_weak + areaTriangleInfoVecs.spring_constant)/2.0;
+                    else if (hostSetInfoVecs.triangles_in_upperhem[T0] == 1 && hostSetInfoVecs.triangles_in_tip[T0] != 1){
+                        area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant_weak*2.0);
+                        // area_spring_constant_2 = (areaTriangleInfoVecs.spring_constant_weak + areaTriangleInfoVecs.spring_constant)/2.0;
                     }
                     else{
                         area_spring_constant_2 = areaTriangleInfoVecs.spring_constant;
@@ -3426,6 +3645,9 @@ void Edgeswap::transferDtoH(GeneralParams& generalParams,
     thrust::copy(generalParams.edges_in_upperhem.begin(),generalParams.edges_in_upperhem.end(),hostSetInfoVecs.edges_in_upperhem.begin());
     thrust::copy(generalParams.edges_in_upperhem_list.begin(),generalParams.edges_in_upperhem_list.end(),hostSetInfoVecs.edges_in_upperhem_list.begin());
     thrust::copy(generalParams.boundaries_in_upperhem.begin(),generalParams.boundaries_in_upperhem.end(),hostSetInfoVecs.boundaries_in_upperhem.begin());
+    thrust::copy(generalParams.nodes_in_tip.begin(),generalParams.nodes_in_tip.end(),hostSetInfoVecs.nodes_in_tip.begin());
+    thrust::copy(generalParams.edges_in_tip.begin(),generalParams.edges_in_tip.end(),hostSetInfoVecs.edges_in_tip.begin());
+    thrust::copy(generalParams.triangles_in_tip.begin(),generalParams.triangles_in_tip.end(),hostSetInfoVecs.triangles_in_tip.begin());
 
     thrust::copy(coordInfoVecs.triangles2Nodes_1.begin(),coordInfoVecs.triangles2Nodes_1.end(),hostSetInfoVecs.triangles2Nodes_1.begin());
     thrust::copy(coordInfoVecs.triangles2Nodes_2.begin(),coordInfoVecs.triangles2Nodes_2.end(),hostSetInfoVecs.triangles2Nodes_2.begin());
@@ -3481,6 +3703,9 @@ void Edgeswap::transferHtoD(GeneralParams& generalParams,
     thrust::copy(hostSetInfoVecs.edges_in_upperhem.begin(),hostSetInfoVecs.edges_in_upperhem.end(),generalParams.edges_in_upperhem.begin());
     thrust::copy(hostSetInfoVecs.edges_in_upperhem_list.begin(),hostSetInfoVecs.edges_in_upperhem_list.end(),generalParams.edges_in_upperhem_list.begin());
     thrust::copy(hostSetInfoVecs.boundaries_in_upperhem.begin(),hostSetInfoVecs.boundaries_in_upperhem.end(),generalParams.boundaries_in_upperhem.begin());
+    thrust::copy(hostSetInfoVecs.nodes_in_tip.begin(),hostSetInfoVecs.nodes_in_tip.end(),generalParams.nodes_in_tip.begin());
+    thrust::copy(hostSetInfoVecs.edges_in_tip.begin(),hostSetInfoVecs.edges_in_tip.end(),generalParams.edges_in_tip.begin());
+    thrust::copy(hostSetInfoVecs.triangles_in_tip.begin(),hostSetInfoVecs.triangles_in_tip.end(),generalParams.triangles_in_tip.begin());
     
     thrust::copy(hostSetInfoVecs.triangles2Nodes_1.begin(),hostSetInfoVecs.triangles2Nodes_1.end(),coordInfoVecs.triangles2Nodes_1.begin());
     thrust::copy(hostSetInfoVecs.triangles2Nodes_2.begin(),hostSetInfoVecs.triangles2Nodes_2.end(),coordInfoVecs.triangles2Nodes_2.begin());

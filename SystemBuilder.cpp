@@ -24,7 +24,8 @@ void SystemBuilder::addNode(double x,double y, double z ) {
 	//std::cout<<"adding node: "<< x << " " << y << " "<< z <<  std::endl;
 }
 
-void SystemBuilder::addNndata(double x1,double x2, double x3, double x4,double x5, double x6, double x7,double x8, double x9, double x10,double x11, double x12 ) {
+void SystemBuilder::addNndata(double x1,double x2, double x3, double x4,double x5, double x6, double x7,double x8, double x9) {
+//void SystemBuilder::addNndata(double x1,double x2, double x3, double x4,double x5, double x6, double x7,double x8, double x9, double x10,double x11, double x12 ) {
 	hostSetInfoVecs.nndata1.push_back(x1);
 	hostSetInfoVecs.nndata2.push_back(x2);
 	hostSetInfoVecs.nndata3.push_back(x3);
